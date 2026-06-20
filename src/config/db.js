@@ -7,7 +7,10 @@ const { Pool } = pg;
 
 // Creamos un pool de conexiones usando la URL del .env
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL
+  connectionString: process.env.DATABASE_URL,
+  ssl: {
+    rejectUnauthorized: false // <--- ESTA LÍNEA ES LA CLAVE
+  }
 });
 
 // Hacemos una consulta de prueba inmediata para verificar la base de datos

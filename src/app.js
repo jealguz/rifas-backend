@@ -11,7 +11,11 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Middlewares obligatorios
-app.use(cors());
+app.use(cors({
+  origin: ['https://fonamenpre.netlify.app/', 'http://localhost:5173'], // Tu frontend en producción y dev
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  credentials: true
+}));
 app.use(express.json({ limit: '50mb' })); // Permite que el servidor entienda JSON en el cuerpo de las peticiones
 
 // 2. Vinculamos las rutas de la rifa al prefijo '/api/rifas'

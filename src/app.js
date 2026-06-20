@@ -25,6 +25,9 @@ app.use(express.json({ limit: '50mb' })); // Permite que el servidor entienda JS
 // 2. Vinculamos las rutas de la rifa al prefijo '/api/rifas'
 app.use('/api/rifas', rifaRoutes);
 
+// Health check para mantener despierto el servidor
+app.get('/api/health', (req, res) => { res.json({ status: 'ok' }); });
+
 // Manejo de rutas globales no encontradas (404)
 app.use((req, res) => {
   res.status(404).json({ error: 'Ruta no encontrada' });

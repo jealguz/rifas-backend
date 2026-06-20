@@ -11,9 +11,13 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Middlewares obligatorios
+const CORS_ORIGINS = process.env.CORS_ORIGINS
+  ? process.env.CORS_ORIGINS.split(',')
+  : ['https://fonamenpre.netlify.app', 'http://localhost:5173'];
+
 app.use(cors({
-  origin: ['https://fonamenpre.netlify.app/', 'http://localhost:5173'], // Tu frontend en producción y dev
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  origin: CORS_ORIGINS,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   credentials: true
 }));
 app.use(express.json({ limit: '50mb' })); // Permite que el servidor entienda JSON en el cuerpo de las peticiones

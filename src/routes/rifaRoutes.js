@@ -1,7 +1,7 @@
 import express from 'express';
 import { crearRifaDinamica, obtenerRifaPorId, obtenerUltimaRifa, obtenerHistorial, actualizarFechaRifa } from '../controllers/rifaController.js';
 // Imaginando que meteremos las nuevas funciones en sus controladores correspondientes
-import { registrarVentaBoleto, obtenerBoletosPorVendedor } from '../controllers/boletosController.js';
+import { registrarVentaBoleto, obtenerBoletosPorVendedor, verificarTicket } from '../controllers/boletosController.js';
 import { finalizarRifa } from '../controllers/sorteoController.js';
 
 const router = express.Router();
@@ -21,6 +21,8 @@ router.get('/boletos/:rifa_id/:vendedor_id', obtenerBoletosPorVendedor);
 router.get('/ultima-activa', obtenerUltimaRifa);
 
 router.get('/historial', obtenerHistorial);
+
+router.get('/ticket/:codigo', verificarTicket);
 
 router.put('/:id/cambiar-fecha', actualizarFechaRifa);
 

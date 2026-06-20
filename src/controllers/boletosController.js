@@ -1,5 +1,6 @@
 
 import * as db from '../config/db.js';
+import crypto from 'crypto';
 
 export const registrarVentaBoleto = async (req, res) => {
   let { rifa_id, numero, nombre_cliente, celular, direccion_referencia, estado_pago, valor_abono, vendedor_id } = req.body;
@@ -84,10 +85,22 @@ export const registrarVentaBoleto = async (req, res) => {
 
     await db.query('COMMIT');
 
+    const ticketCode = `TKT-${rifa_id}-${numero}-${crypto.randomBytes(3).toString('hex').toUpperCase()}`;
+
     res.status(200).json({
       mensaje: '¡Venta registrada de manera impecable!',
       boleto: boletoRes.rows[0],
-      clienteId
+      clienteId,
+      ticket: {
+        codigo: ticketCode,
+        numero,
+        rifa_id,
+        nombre_cliente: nombre_cliente.trim(),
+        celular: celularLimpio,
+        estado_pago,
+        valor_abono: abonoFinal,
+        fecha_venta: new Date().toISOString()
+      }
     });
 
   } catch (error) {
@@ -97,6 +110,37 @@ export const registrarVentaBoleto = async (req, res) => {
   }
 };
 
+
+export const verificarTicket = async (req, res) => {
+  const { codigo } = req.params;
+  const partes = codigo.split('-');
+  if (partes.length < 4 || partes[0] !== 'TKT') {
+    return res.status(400).json({ error: 'Código de ticket inválido.' });
+  }
+  const rifa_id = partes[1];
+  const numero = partes[2];
+
+  try {
+    const result = await db.query(`
+      SELECT b.*, r.nombre_rifa, r.precio_boleto, r.loteria, r.fecha_sorteo,
+        e.nombre as vendedor_nombre,
+        c.nombre as cliente_nombre, c.celular as cliente_celular
+      FROM boletos b
+      JOIN rifas r ON b.rifa_id = r.id
+      LEFT JOIN encargados e ON b.encargado_id = e.id
+      LEFT JOIN clientes c ON b.cliente_id = c.id
+      WHERE b.rifa_id = $1 AND b.numero = $2
+    `, [rifa_id, numero]);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Ticket no encontrado.' });
+    }
+
+    res.json({ valido: true, ticket: result.rows[0], codigo });
+  } catch (error) {
+    res.status(500).json({ error: 'Error al verificar ticket.' });
+  }
+};
 
 // Nueva función: Obtener solo lo que le toca al vendedor
 export const obtenerBoletosPorVendedor = async (req, res) => {

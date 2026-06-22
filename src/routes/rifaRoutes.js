@@ -1,7 +1,7 @@
 import express from 'express';
 import { crearRifaDinamica, obtenerRifaPorId, obtenerUltimaRifa, obtenerHistorial, actualizarFechaRifa } from '../controllers/rifaController.js';
 // Imaginando que meteremos las nuevas funciones en sus controladores correspondientes
-import { registrarVentaBoleto, obtenerBoletosPorVendedor, verificarTicket } from '../controllers/boletosController.js';
+import { registrarVentaBoleto, obtenerBoletosPorVendedor, verificarTicket, actualizarPagoBoleto } from '../controllers/boletosController.js';
 import { finalizarRifa } from '../controllers/sorteoController.js';
 
 const router = express.Router();
@@ -14,6 +14,9 @@ router.put('/vender', registrarVentaBoleto);
 
 // 3. Ruta para ingresar el número ganador de la lotería y cerrar la rifa (Histórico)
 router.post('/finalizar', finalizarRifa);
+
+// 4. Ruta para actualizar el estado de pago de un boleto ya vendido (debe → pagado, abono → pagado, etc.)
+router.put('/actualizar-pago', actualizarPagoBoleto);
 
 // rifaRoutes.js
 router.get('/boletos/:rifa_id/:vendedor_id', obtenerBoletosPorVendedor);

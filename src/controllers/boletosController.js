@@ -142,6 +142,53 @@ export const verificarTicket = async (req, res) => {
   }
 };
 
+export const actualizarPagoBoleto = async (req, res) => {
+  const { rifa_id, numero, nuevo_estado, valor_abono } = req.body;
+
+  if (!rifa_id || !numero || !nuevo_estado) {
+    return res.status(400).json({ error: 'Faltan campos obligatorios (rifa_id, numero, nuevo_estado).' });
+  }
+
+  const estadosValidos = ['debe', 'abono', 'pagado'];
+  if (!estadosValidos.includes(nuevo_estado)) {
+    return res.status(400).json({ error: 'Estado de pago no válido.' });
+  }
+
+  try {
+    const boletoExistente = await db.query(
+      'SELECT estado_pago FROM boletos WHERE rifa_id = $1 AND numero = $2',
+      [rifa_id, numero.toString()]
+    );
+
+    if (boletoExistente.rows.length === 0) {
+      return res.status(404).json({ error: 'Boleto no encontrado.' });
+    }
+
+    const estadoActual = boletoExistente.rows[0].estado_pago;
+    if (estadoActual === 'disponible' || estadoActual === 'pagado') {
+      return res.status(400).json({ error: 'Solo se puede actualizar un boleto en estado "debe" o "abono".' });
+    }
+
+    let abonoFinal = 0.00;
+    if (nuevo_estado === 'abono') {
+      abonoFinal = parseFloat(valor_abono);
+      if (isNaN(abonoFinal) || abonoFinal <= 0) {
+        return res.status(400).json({ error: 'Para "abono" debe especificar un monto mayor a 0.' });
+      }
+    }
+
+    const result = await db.query(
+      `UPDATE boletos SET estado_pago = $1, valor_abonado = $2 WHERE rifa_id = $3 AND numero = $4 RETURNING id, numero, estado_pago, valor_abonado`,
+      [nuevo_estado, abonoFinal, rifa_id, numero.toString()]
+    );
+
+    res.json({ mensaje: 'Estado de pago actualizado.', boleto: result.rows[0] });
+  } catch (error) {
+    console.error('Error al actualizar pago:', error);
+    res.status(500).json({ error: 'Error interno del servidor.' });
+  }
+};
+
 // Nueva función: Obtener solo lo que le toca al vendedor
 export const obtenerBoletosPorVendedor = async (req, res) => {
   const { rifa_id, vendedor_id } = req.params;

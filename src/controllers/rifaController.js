@@ -250,26 +250,32 @@ export const obtenerUltimaRifa = async (req, res) => {
 
 export const actualizarFechaRifa = async (req, res) => {
   const { id } = req.params;
-  const { fecha_sorteo } = req.body;
+  const { fecha_sorteo, loteria } = req.body;
 
   if (!id || !fecha_sorteo) {
     return res.status(400).json({ error: 'Faltan datos: id de la rifa y nueva fecha.' });
   }
 
   try {
-    const result = await db.query(
-      `UPDATE rifas SET fecha_sorteo = $1 WHERE id = $2 AND estado = 'activa' RETURNING id, nombre_rifa, fecha_sorteo`,
-      [fecha_sorteo, id]
-    );
+    let query, params;
+    if (loteria) {
+      query = `UPDATE rifas SET fecha_sorteo = $1, loteria = $2 WHERE id = $3 AND estado = 'activa' RETURNING id, nombre_rifa, fecha_sorteo, loteria`;
+      params = [fecha_sorteo, loteria, id];
+    } else {
+      query = `UPDATE rifas SET fecha_sorteo = $1 WHERE id = $2 AND estado = 'activa' RETURNING id, nombre_rifa, fecha_sorteo`;
+      params = [fecha_sorteo, id];
+    }
+
+    const result = await db.query(query, params);
 
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Rifa no encontrada o ya está finalizada.' });
     }
 
-    res.json({ mensaje: 'Fecha actualizada con éxito', rifa: result.rows[0] });
+    res.json({ mensaje: 'Rifa actualizada con éxito', rifa: result.rows[0] });
   } catch (error) {
-    console.error('Error al actualizar fecha:', error);
-    res.status(500).json({ error: 'Error al actualizar la fecha' });
+    console.error('Error al actualizar la rifa:', error);
+    res.status(500).json({ error: 'Error al actualizar la rifa' });
   }
 };
 
